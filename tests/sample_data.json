@@ -1,0 +1,200 @@
+{
+  "sample_calculations": [
+    {
+      "name": "Standard Affordability - Young Professional",
+      "calculation_type": "AFFORDABILITY",
+      "affordability_input": {
+        "gross_monthly_income": 25000,
+        "dsr_ratio": 0.35,
+        "monthly_obligations": 3000,
+        "annual_interest_rate": 0.115,
+        "term_years": 25,
+        "stress_rate_bps": 200
+      },
+      "applicant": {
+        "name": "Sarah Johnson",
+        "email": "sarah.johnson@example.com",
+        "phone": "+1-868-555-0123"
+      },
+      "currency": "TTD",
+      "validity_days": 90
+    },
+    {
+      "name": "High Income Professional",
+      "calculation_type": "AFFORDABILITY",
+      "affordability_input": {
+        "gross_monthly_income": 50000,
+        "dsr_ratio": 0.4,
+        "monthly_obligations": 8000,
+        "annual_interest_rate": 0.10,
+        "term_years": 20,
+        "stress_rate_bps": 200
+      },
+      "applicant": {
+        "name": "Michael Chen",
+        "email": "m.chen@example.com"
+      },
+      "currency": "TTD",
+      "validity_days": 90
+    },
+    {
+      "name": "First Time Home Buyer",
+      "calculation_type": "PAYMENT",
+      "payment_input": {
+        "principal_amount": 500000,
+        "annual_interest_rate": 0.12,
+        "term_years": 25,
+        "stress_rate_bps": 200
+      },
+      "applicant": {
+        "name": "Jennifer Martinez",
+        "email": "j.martinez@example.com",
+        "phone": "+1-868-555-0456"
+      },
+      "currency": "TTD",
+      "validity_days": 90
+    },
+    {
+      "name": "Luxury Property Purchase",
+      "calculation_type": "PAYMENT",
+      "payment_input": {
+        "principal_amount": 2500000,
+        "annual_interest_rate": 0.095,
+        "term_years": 30,
+        "stress_rate_bps": 150
+      },
+      "applicant": {
+        "name": "Robert Williams",
+        "email": "r.williams@example.com"
+      },
+      "currency": "USD",
+      "validity_days": 60
+    },
+    {
+      "name": "Investment Property",
+      "calculation_type": "AFFORDABILITY",
+      "affordability_input": {
+        "gross_monthly_income": 40000,
+        "dsr_ratio": 0.45,
+        "monthly_obligations": 10000,
+        "annual_interest_rate": 0.13,
+        "term_years": 15,
+        "stress_rate_bps": 250
+      },
+      "applicant": {
+        "name": "Lisa Thompson",
+        "email": "lisa.t@example.com"
+      },
+      "currency": "TTD",
+      "validity_days": 90
+    },
+    {
+      "name": "Short Term Loan",
+      "calculation_type": "PAYMENT",
+      "payment_input": {
+        "principal_amount": 350000,
+        "annual_interest_rate": 0.11,
+        "term_years": 10,
+        "stress_rate_bps": 200
+      },
+      "applicant": {
+        "name": "David Brown",
+        "email": "d.brown@example.com",
+        "phone": "+1-868-555-0789"
+      },
+      "currency": "TTD",
+      "validity_days": 90
+    },
+    {
+      "name": "Refinancing Assessment",
+      "calculation_type": "PAYMENT",
+      "payment_input": {
+        "principal_amount": 1200000,
+        "annual_interest_rate": 0.085,
+        "term_years": 20,
+        "stress_rate_bps": 150
+      },
+      "applicant": {
+        "name": "Emily Davis",
+        "email": "emily.davis@example.com"
+      },
+      "currency": "USD",
+      "validity_days": 120
+    },
+    {
+      "name": "Conservative Borrower",
+      "calculation_type": "AFFORDABILITY",
+      "affordability_input": {
+        "gross_monthly_income": 20000,
+        "dsr_ratio": 0.3,
+        "monthly_obligations": 2500,
+        "annual_interest_rate": 0.12,
+        "term_years": 20,
+        "stress_rate_bps": 200
+      },
+      "applicant": {
+        "name": "Carlos Rodriguez",
+        "email": "carlos.r@example.com",
+        "phone": "+1-868-555-0321"
+      },
+      "currency": "TTD",
+      "validity_days": 90
+    }
+  ],
+  "test_scenarios": {
+    "edge_cases": [
+      {
+        "name": "Maximum DSR",
+        "gross_monthly_income": 35000,
+        "dsr_ratio": 0.8,
+        "monthly_obligations": 5000,
+        "note": "Tests upper DSR limit"
+      },
+      {
+        "name": "Minimum DSR",
+        "gross_monthly_income": 30000,
+        "dsr_ratio": 0.1,
+        "monthly_obligations": 0,
+        "note": "Tests lower DSR limit"
+      },
+      {
+        "name": "High Interest Rate",
+        "principal_amount": 1000000,
+        "annual_interest_rate": 0.20,
+        "term_years": 25,
+        "note": "Tests high interest scenario"
+      },
+      {
+        "name": "Long Term Loan",
+        "principal_amount": 800000,
+        "annual_interest_rate": 0.10,
+        "term_years": 30,
+        "note": "Tests maximum loan term"
+      },
+      {
+        "name": "Short Term Loan",
+        "principal_amount": 500000,
+        "annual_interest_rate": 0.12,
+        "term_years": 5,
+        "note": "Tests minimum practical loan term"
+      }
+    ]
+  },
+  "currency_examples": {
+    "TTD": {
+      "name": "Trinidad and Tobago Dollar",
+      "typical_income_range": "15000-60000",
+      "typical_loan_range": "300000-3000000"
+    },
+    "USD": {
+      "name": "United States Dollar",
+      "typical_income_range": "3000-15000",
+      "typical_loan_range": "100000-1000000"
+    },
+    "CAD": {
+      "name": "Canadian Dollar",
+      "typical_income_range": "4000-12000",
+      "typical_loan_range": "150000-800000"
+    }
+  }
+}
