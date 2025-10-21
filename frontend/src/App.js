@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import './App.css';
 import axios from 'axios';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
+// In development, proxy handles routing to backend (see package.json proxy setting)
+// In production, use environment variable or empty string for same-origin requests
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 
 function App() {
   const [calculationType, setCalculationType] = useState('AFFORDABILITY');
