@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-10-22T19:23:53.022662",
+  "timestamp": "2025-10-22T19:34:52.624730",
   "total_tests": 15,
   "passed_tests": 15,
   "success_rate": 100.0,
@@ -62,12 +62,12 @@
     {
       "test_name": "Certificate Generation - Create Calculation",
       "success": true,
-      "details": "Certificate ID: 704C3EBA"
+      "details": "Certificate ID: 34A6929C"
     },
     {
       "test_name": "Certificate Generation - PDF Creation",
       "success": true,
-      "details": "PDF generated, size: 2575 bytes"
+      "details": "PDF generated, size: 2574 bytes"
     },
     {
       "test_name": "Certificate Generation - Data Retrieval",
