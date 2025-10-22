@@ -1,0 +1,83 @@
+{
+  "timestamp": "2025-10-22T19:23:53.022662",
+  "total_tests": 15,
+  "passed_tests": 15,
+  "success_rate": 100.0,
+  "test_details": [
+    {
+      "test_name": "Health Check",
+      "success": true,
+      "details": "Status: 200, Response: {'status': 'healthy', 'service': 'Fraser Finance API'}"
+    },
+    {
+      "test_name": "Affordability Calculation - Amount Check",
+      "success": true,
+      "details": "Max loan: TTD 726,555.33 (within expected range)"
+    },
+    {
+      "test_name": "Affordability Stress Test",
+      "success": true,
+      "details": "Stress loan: TTD 643,334.63, Reduction: 11.45%"
+    },
+    {
+      "test_name": "Payment Calculation - Amount Check",
+      "success": true,
+      "details": "Monthly payment: TTD 8,808.69 (expected 8,808.69)"
+    },
+    {
+      "test_name": "Payment Stress Test",
+      "success": true,
+      "details": "Stress payment: TTD 9,948.17, Increase: 12.94%"
+    },
+    {
+      "test_name": "Negative Affordability Handling",
+      "success": true,
+      "details": "Correctly rejected: Monthly obligations exceed affordable debt service. Cannot generate certificate."
+    },
+    {
+      "test_name": "Form Validation - Invalid DSR",
+      "success": true,
+      "details": "Status: 422 for invalid DSR (90%)"
+    },
+    {
+      "test_name": "Form Validation - Negative Income",
+      "success": true,
+      "details": "Status: 422 for negative income"
+    },
+    {
+      "test_name": "Multi-Currency Support - TTD",
+      "success": true,
+      "details": "Currency TTD: TTD $790.79"
+    },
+    {
+      "test_name": "Multi-Currency Support - USD",
+      "success": true,
+      "details": "Currency USD: USD $790.79"
+    },
+    {
+      "test_name": "Multi-Currency Support - CAD",
+      "success": true,
+      "details": "Currency CAD: CAD $790.79"
+    },
+    {
+      "test_name": "Certificate Generation - Create Calculation",
+      "success": true,
+      "details": "Certificate ID: 704C3EBA"
+    },
+    {
+      "test_name": "Certificate Generation - PDF Creation",
+      "success": true,
+      "details": "PDF generated, size: 2575 bytes"
+    },
+    {
+      "test_name": "Certificate Generation - Data Retrieval",
+      "success": true,
+      "details": "Certificate retrieved, type: AFFORDABILITY"
+    },
+    {
+      "test_name": "Certificates List",
+      "success": true,
+      "details": "Retrieved 10 certificates"
+    }
+  ]
+}
