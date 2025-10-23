@@ -131,7 +131,7 @@ function App() {
       <nav className="nav-bar py-4 px-6 shadow-lg">
         <div className="container mx-auto flex items-center justify-between">
           <div className="flex items-center">
-            <h1 className="text-3xl font-bold text-white" data-testid="app-title">Fraser Finance</h1>
+            <h1 className="text-3xl font-bold text-white" data-testid="app-title">Pre-Qualification App</h1>
           </div>
           <div className="text-white text-sm">
             <span data-testid="nav-subtitle">Pre-Qualification Calculator</span>
