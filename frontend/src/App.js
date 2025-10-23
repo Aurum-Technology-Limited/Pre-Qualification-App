@@ -561,9 +561,9 @@ function App() {
       {/* Footer */}
       <footer className="bg-white border-t border-gray-200 py-6 mt-12">
         <div className="container mx-auto px-4 text-center">
-          <p className="text-lime font-bold text-lg">Fraser Finance</p>
-          <p className="text-gray-600 text-sm mt-1">Your Trusted Mortgage Partner</p>
-          <p className="text-gray-500 text-xs mt-2">© 2024 Fraser Finance. All rights reserved.</p>
+          <p className="text-lime font-bold text-lg">Pre-Qualification App</p>
+          <p className="text-gray-600 text-sm mt-1">Your Mortgage Calculator</p>
+          <p className="text-gray-500 text-xs mt-2">© 2024 Pre-Qualification App. All rights reserved.</p>
         </div>
       </footer>
     </div>
