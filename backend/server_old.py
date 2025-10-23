@@ -1,19 +1,25 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, validator
 from typing import Optional, Literal
 from datetime import datetime, timedelta
 import os
 import math
 import uuid
-from supabase import create_client, Client
+from motor.motor_asyncio import AsyncIOMotorClient
 from reportlab.lib.pagesizes import letter
+from reportlab.lib import colors
+from reportlab.lib.units import inch
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.enums import TA_CENTER, TA_LEFT
 from reportlab.pdfgen import canvas
 from reportlab.lib.colors import HexColor
+import io
 from pathlib import Path
 
-app = FastAPI(title="Pre-Qualification App API")
+app = FastAPI(title="Fraser Finance API")
 
 # CORS Configuration
 app.add_middleware(
@@ -24,14 +30,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Supabase Connection
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY")
-
-if not SUPABASE_URL or not SUPABASE_KEY:
-    raise ValueError("SUPABASE_URL and SUPABASE_KEY must be set in environment")
-
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+# MongoDB Connection
+MONGO_URL = os.getenv("MONGO_URL", "mongodb://localhost:27017/fraser_finance")
+client = AsyncIOMotorClient(MONGO_URL)
+db = client.fraser_finance
+certificates_collection = db.certificates
 
 # Ensure PDF directory exists
 PDF_DIR = Path("/app/backend/certificates")
@@ -51,10 +54,9 @@ class AffordabilityInput(BaseModel):
     term_years: int = Field(ge=1, le=50)
     stress_rate_bps: Optional[int] = Field(default=0, ge=0, le=1000)
     
-    @field_validator('monthly_obligations')
-    @classmethod
-    def validate_obligations(cls, v, info):
-        if 'gross_monthly_income' in info.data and v >= info.data['gross_monthly_income']:
+    @validator('monthly_obligations')
+    def validate_obligations(cls, v, values):
+        if 'gross_monthly_income' in values and v >= values['gross_monthly_income']:
             raise ValueError('Monthly obligations must be less than gross income')
         return v
 
@@ -124,7 +126,7 @@ def generate_certificate_pdf(certificate_data: dict) -> str:
     # Company name and logo
     c.setFillColor(white)
     c.setFont("Helvetica-Bold", 32)
-    c.drawCentredString(width / 2, height - 60, "Pre-Qualification App")
+    c.drawCentredString(width / 2, height - 60, "Fraser Finance")
     
     c.setFont("Helvetica-Bold", 20)
     c.drawCentredString(width / 2, height - 90, "Pre-Qualification Certificate")
@@ -220,7 +222,7 @@ def generate_certificate_pdf(certificate_data: dict) -> str:
         "This pre-qualification certificate is an estimate only and does not constitute a loan approval or commitment.",
         "Final loan approval is subject to credit verification, property appraisal, and other lending criteria.",
         f"This certificate is valid for {certificate_data['validity_days']} days from the issue date.",
-        "Interest rates and terms are subject to change. Please consult with a loan officer for details."
+        "Interest rates and terms are subject to change. Please consult with a Fraser Finance loan officer for details."
     ]
     
     for line in disclaimer_text:
@@ -230,10 +232,10 @@ def generate_certificate_pdf(certificate_data: dict) -> str:
     # Footer
     c.setFont("Helvetica-Bold", 10)
     c.setFillColor(lime_green)
-    c.drawCentredString(width / 2, 40, "Pre-Qualification App - Your Mortgage Calculator")
+    c.drawCentredString(width / 2, 40, "Fraser Finance - Your Trusted Mortgage Partner")
     c.setFont("Helvetica", 8)
     c.setFillColor(dark_green)
-    c.drawCentredString(width / 2, 25, "www.prequalificationapp.com")
+    c.drawCentredString(width / 2, 25, "www.fraserfinance.com | info@fraserfinance.com")
     
     c.save()
     return str(filepath)
@@ -241,7 +243,7 @@ def generate_certificate_pdf(certificate_data: dict) -> str:
 # API Endpoints
 @app.get("/api/health")
 async def health_check():
-    return {"status": "healthy", "service": "Pre-Qualification App API"}
+    return {"status": "healthy", "service": "Fraser Finance API"}
 
 @app.post("/api/calculate")
 async def calculate(request: CalculationRequest):
@@ -372,14 +374,13 @@ async def calculate(request: CalculationRequest):
                     }
                 })
         
-        # Store in Supabase
+        # Store in MongoDB
         certificate_doc = {
             **result,
-            "created_at": datetime.now().isoformat(),
+            "created_at": datetime.now(),
             "pdf_generated": False
         }
-        
-        supabase.table("certificates").insert(certificate_doc).execute()
+        await certificates_collection.insert_one(certificate_doc)
         
         return result
         
@@ -389,13 +390,11 @@ async def calculate(request: CalculationRequest):
 @app.post("/api/generate-certificate/{certificate_id}")
 async def generate_certificate(certificate_id: str):
     try:
-        # Retrieve certificate data from Supabase
-        response = supabase.table("certificates").select("*").eq("certificate_id", certificate_id).execute()
+        # Retrieve certificate data from MongoDB
+        cert_data = await certificates_collection.find_one({"certificate_id": certificate_id})
         
-        if not response.data or len(response.data) == 0:
+        if not cert_data:
             raise HTTPException(status_code=404, detail="Certificate not found")
-        
-        cert_data = response.data[0]
         
         # Prepare certificate data for PDF
         pdf_data = {
@@ -435,13 +434,16 @@ async def generate_certificate(certificate_id: str):
         # Generate PDF
         pdf_path = generate_certificate_pdf(pdf_data)
         
-        # Update Supabase
-        supabase.table("certificates").update({"pdf_generated": True, "pdf_path": pdf_path}).eq("certificate_id", certificate_id).execute()
+        # Update MongoDB
+        await certificates_collection.update_one(
+            {"certificate_id": certificate_id},
+            {"$set": {"pdf_generated": True, "pdf_path": pdf_path}}
+        )
         
         return FileResponse(
             pdf_path,
             media_type="application/pdf",
-            filename=f"PreQualification_Certificate_{certificate_id}.pdf"
+            filename=f"Fraser_Finance_Certificate_{certificate_id}.pdf"
         )
         
     except Exception as e:
@@ -449,18 +451,26 @@ async def generate_certificate(certificate_id: str):
 
 @app.get("/api/certificates/{certificate_id}")
 async def get_certificate(certificate_id: str):
-    response = supabase.table("certificates").select("*").eq("certificate_id", certificate_id).execute()
+    cert_data = await certificates_collection.find_one({"certificate_id": certificate_id})
     
-    if not response.data or len(response.data) == 0:
+    if not cert_data:
         raise HTTPException(status_code=404, detail="Certificate not found")
     
-    return response.data[0]
+    # Remove MongoDB _id field
+    cert_data.pop("_id", None)
+    
+    return cert_data
 
 @app.get("/api/certificates")
 async def list_certificates(limit: int = 10):
-    response = supabase.table("certificates").select("*").order("created_at", desc=True).limit(limit).execute()
+    cursor = certificates_collection.find().sort("created_at", -1).limit(limit)
+    certificates = await cursor.to_list(length=limit)
     
-    return {"certificates": response.data, "count": len(response.data)}
+    # Remove MongoDB _id fields
+    for cert in certificates:
+        cert.pop("_id", None)
+    
+    return {"certificates": certificates, "count": len(certificates)}
 
 if __name__ == "__main__":
     import uvicorn
