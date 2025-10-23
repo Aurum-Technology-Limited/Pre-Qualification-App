@@ -7,11 +7,15 @@ from datetime import datetime, timedelta
 import os
 import math
 import uuid
+from dotenv import load_dotenv
 from supabase import create_client, Client
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from reportlab.lib.colors import HexColor
 from pathlib import Path
+
+# Load environment variables
+load_dotenv()
 
 app = FastAPI(title="Pre-Qualification App API")
 
