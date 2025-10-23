@@ -41,4 +41,7 @@ backend/certificates/*.pdf
 
 # Testing
 coverage/
-.pytest_cache/
+.pytest_cache/-e 
+# Environment files
+*.env
+*.env.*
