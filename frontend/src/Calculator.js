@@ -195,8 +195,8 @@ function Calculator({ user, onSignOut }) {
       
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         {!results ? (
-          <div className="card p-8 fade-in" data-testid="calculation-form">
-            <h2 className="text-2xl font-bold text-lime-dark mb-6">New Pre-Qualification</h2>
+          <div className="card p-8 fade-in bg-white dark:bg-dark-card transition-colors duration-200" data-testid="calculation-form">
+            <h2 className="text-2xl font-bold text-lime-dark dark:text-lime mb-6">New Pre-Qualification</h2>
             
             {/* Calculation Type Tabs */}
             <div className="flex border-b border-gray-200 mb-8">
