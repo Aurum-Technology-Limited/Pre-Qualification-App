@@ -93,7 +93,7 @@ function Auth() {
           <form onSubmit={handleSubmit} className="space-y-6">
             {!isLogin && (
               <div>
-                <label htmlFor="fullName" className="block text-sm font-medium text-lime-dark">
+                <label htmlFor="fullName" className="block text-sm font-medium text-lime-dark dark:text-lime">
                   Full Name
                 </label>
                 <div className="mt-1">
