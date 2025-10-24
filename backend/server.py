@@ -268,8 +268,15 @@ async def health_check():
     return {"status": "healthy", "service": "Pre-Qualification App API"}
 
 @app.post("/api/calculate")
-async def calculate(request: CalculationRequest, user = Depends(get_current_user)):
+async def calculate(request: CalculationRequest, auth_data = Depends(get_current_user)):
     try:
+        user = auth_data["user"]
+        token = auth_data["token"]
+        
+        # Create authenticated Supabase client for this request
+        user_supabase = create_client(SUPABASE_URL, SUPABASE_KEY, options={
+            "headers": {"Authorization": f"Bearer {token}"}
+        })
         cert_id = str(uuid.uuid4())[:8].upper()
         issue_date = datetime.now()
         expiry_date = issue_date + timedelta(days=request.validity_days)
