@@ -22,7 +22,12 @@ app = FastAPI(title="Pre-Qualification App API")
 # CORS Configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://pre-qualification-app-yq1a-6mq1m82ra-marc-alleynes-projects.vercel.app",
+        "https://mortgage-preapp.preview.emergentagent.com",
+        "http://localhost:3000",
+        "http://localhost:3001",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
