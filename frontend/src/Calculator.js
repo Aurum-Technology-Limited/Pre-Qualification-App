@@ -6,7 +6,7 @@ import axios from 'axios';
 // In production, use environment variable or empty string for same-origin requests
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 
-function App() {
+function Calculator({ user, onSignOut }) {
   const [calculationType, setCalculationType] = useState('AFFORDABILITY');
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState(null);
