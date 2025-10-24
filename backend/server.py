@@ -504,8 +504,15 @@ async def get_certificate(certificate_id: str, auth_data = Depends(get_current_u
     return response.data[0]
 
 @app.get("/api/certificates")
-async def list_certificates(limit: int = 10, user = Depends(get_current_user)):
-    response = supabase.table("certificates").select("*").eq("user_id", user.id).order("created_at", desc=True).limit(limit).execute()
+async def list_certificates(limit: int = 10, auth_data = Depends(get_current_user)):
+    user = auth_data["user"]
+    token = auth_data["token"]
+    
+    user_supabase = create_client(SUPABASE_URL, SUPABASE_KEY, options={
+        "headers": {"Authorization": f"Bearer {token}"}
+    })
+    
+    response = user_supabase.table("certificates").select("*").order("created_at", desc=True).limit(limit).execute()
     
     return {"certificates": response.data, "count": len(response.data)}
 
