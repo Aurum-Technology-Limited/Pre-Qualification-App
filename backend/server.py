@@ -396,9 +396,10 @@ async def calculate(request: CalculationRequest, user = Depends(get_current_user
                     }
                 })
         
-        # Store in Supabase
+        # Store in Supabase with user_id
         certificate_doc = {
             **result,
+            "user_id": user.id,
             "created_at": datetime.now().isoformat(),
             "pdf_generated": False
         }
