@@ -77,7 +77,11 @@ function Calculator({ user, onSignOut }) {
         };
       }
       
-      const response = await axios.post(`${BACKEND_URL}/api/calculate`, requestData);
+      const response = await axios.post(`${BACKEND_URL}/api/calculate`, requestData, {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
+        }
+      });
       setResults(response.data);
     } catch (err) {
       setError(err.response?.data?.message || err.response?.data?.detail || 'An error occurred during calculation');
