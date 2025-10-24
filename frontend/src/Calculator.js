@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import './App.css';
 import axios from 'axios';
+import { supabase } from './supabaseClient';
 
 // In development, proxy handles routing to backend (see package.json proxy setting)
 // In production, use environment variable or empty string for same-origin requests
