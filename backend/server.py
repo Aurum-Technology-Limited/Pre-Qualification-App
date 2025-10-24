@@ -414,8 +414,8 @@ async def calculate(request: CalculationRequest, user = Depends(get_current_user
 @app.post("/api/generate-certificate/{certificate_id}")
 async def generate_certificate(certificate_id: str, user = Depends(get_current_user)):
     try:
-        # Retrieve certificate data from Supabase
-        response = supabase.table("certificates").select("*").eq("certificate_id", certificate_id).execute()
+        # Retrieve certificate data from Supabase (user-specific)
+        response = supabase.table("certificates").select("*").eq("certificate_id", certificate_id).eq("user_id", user.id).execute()
         
         if not response.data or len(response.data) == 0:
             raise HTTPException(status_code=404, detail="Certificate not found")
