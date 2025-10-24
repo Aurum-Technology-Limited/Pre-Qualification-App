@@ -476,7 +476,7 @@ async def generate_certificate(certificate_id: str, auth_data = Depends(get_curr
         pdf_path = generate_certificate_pdf(pdf_data)
         
         # Update Supabase
-        supabase.table("certificates").update({"pdf_generated": True, "pdf_path": pdf_path}).eq("certificate_id", certificate_id).execute()
+        user_supabase.table("certificates").update({"pdf_generated": True, "pdf_path": pdf_path}).eq("certificate_id", certificate_id).execute()
         
         return FileResponse(
             pdf_path,
