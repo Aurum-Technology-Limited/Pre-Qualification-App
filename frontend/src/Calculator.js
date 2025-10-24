@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import './App.css';
 import axios from 'axios';
 import { supabase } from './supabaseClient';
+import { useTheme } from './ThemeContext';
 
 // In development, proxy handles routing to backend (see package.json proxy setting)
 // In production, use environment variable or empty string for same-origin requests
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 
 function Calculator({ user, onSignOut }) {
+  const { darkMode, toggleDarkMode } = useTheme();
   const [calculationType, setCalculationType] = useState('AFFORDABILITY');
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState(null);
