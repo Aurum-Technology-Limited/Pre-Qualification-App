@@ -412,7 +412,7 @@ async def calculate(request: CalculationRequest, user = Depends(get_current_user
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/generate-certificate/{certificate_id}")
-async def generate_certificate(certificate_id: str):
+async def generate_certificate(certificate_id: str, user = Depends(get_current_user)):
     try:
         # Retrieve certificate data from Supabase
         response = supabase.table("certificates").select("*").eq("certificate_id", certificate_id).execute()
