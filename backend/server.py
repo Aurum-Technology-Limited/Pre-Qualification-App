@@ -482,8 +482,8 @@ async def get_certificate(certificate_id: str, user = Depends(get_current_user))
     return response.data[0]
 
 @app.get("/api/certificates")
-async def list_certificates(limit: int = 10):
-    response = supabase.table("certificates").select("*").order("created_at", desc=True).limit(limit).execute()
+async def list_certificates(limit: int = 10, user = Depends(get_current_user)):
+    response = supabase.table("certificates").select("*").eq("user_id", user.id).order("created_at", desc=True).limit(limit).execute()
     
     return {"certificates": response.data, "count": len(response.data)}
 
