@@ -488,8 +488,15 @@ async def generate_certificate(certificate_id: str, auth_data = Depends(get_curr
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/certificates/{certificate_id}")
-async def get_certificate(certificate_id: str, user = Depends(get_current_user)):
-    response = supabase.table("certificates").select("*").eq("certificate_id", certificate_id).eq("user_id", user.id).execute()
+async def get_certificate(certificate_id: str, auth_data = Depends(get_current_user)):
+    user = auth_data["user"]
+    token = auth_data["token"]
+    
+    user_supabase = create_client(SUPABASE_URL, SUPABASE_KEY, options={
+        "headers": {"Authorization": f"Bearer {token}"}
+    })
+    
+    response = user_supabase.table("certificates").select("*").eq("certificate_id", certificate_id).execute()
     
     if not response.data or len(response.data) == 0:
         raise HTTPException(status_code=404, detail="Certificate not found")
