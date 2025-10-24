@@ -403,7 +403,7 @@ async def calculate(request: CalculationRequest, auth_data = Depends(get_current
                     }
                 })
         
-        # Store in Supabase with user_id
+        # Store in Supabase with user_id (using authenticated client)
         certificate_doc = {
             **result,
             "user_id": user.id,
@@ -411,7 +411,7 @@ async def calculate(request: CalculationRequest, auth_data = Depends(get_current
             "pdf_generated": False
         }
         
-        supabase.table("certificates").insert(certificate_doc).execute()
+        user_supabase.table("certificates").insert(certificate_doc).execute()
         
         return result
         
