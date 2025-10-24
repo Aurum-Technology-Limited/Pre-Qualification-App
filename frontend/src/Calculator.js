@@ -228,12 +228,12 @@ function Calculator({ user, onSignOut }) {
                 <h3 className="text-xl font-semibold text-lime mb-4">Applicant Information</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-lime-dark font-semibold mb-2">
+                    <label className="block text-lime-dark dark:text-lime font-semibold mb-2">
                       Full Name <span className="text-lime">*</span>
                     </label>
                     <input
                       type="text"
-                      className="input-field"
+                      className="input-field bg-white dark:bg-dark-bg dark:text-dark-text dark:border-dark-border"
                       value={applicantName}
                       onChange={(e) => setApplicantName(e.target.value)}
                       required
