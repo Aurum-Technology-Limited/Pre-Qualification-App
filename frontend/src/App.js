@@ -1,5 +1,6 @@
 import React from 'react';
 import { AuthProvider, useAuth } from './AuthContext';
+import { ThemeProvider } from './ThemeContext';
 import Auth from './Auth';
 import Calculator from './Calculator';
 
@@ -8,10 +9,10 @@ function AppContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-dark-bg flex items-center justify-center transition-colors duration-200">
         <div className="text-center">
           <div className="loading-spinner mx-auto mb-4" style={{width: '50px', height: '50px', borderWidth: '4px'}}></div>
-          <p className="text-lime-dark font-semibold">Loading...</p>
+          <p className="text-lime-dark dark:text-lime font-semibold">Loading...</p>
         </div>
       </div>
     );
@@ -26,9 +27,11 @@ function AppContent() {
 
 function App() {
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 
