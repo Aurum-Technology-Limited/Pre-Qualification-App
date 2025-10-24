@@ -112,7 +112,7 @@ function Auth() {
             )}
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-lime-dark">
+              <label htmlFor="email" className="block text-sm font-medium text-lime-dark dark:text-lime">
                 Email Address
               </label>
               <div className="mt-1">
@@ -131,7 +131,7 @@ function Auth() {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-lime-dark">
+              <label htmlFor="password" className="block text-sm font-medium text-lime-dark dark:text-lime">
                 Password
               </label>
               <div className="mt-1">
