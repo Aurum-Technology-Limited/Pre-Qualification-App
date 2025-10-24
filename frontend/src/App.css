@@ -41,12 +41,24 @@
   font-size: 16px;
   transition: all 0.3s ease;
   width: 100%;
+  background-color: white;
+  color: #333;
+}
+
+.dark .input-field {
+  background-color: #1a1a1a;
+  border-color: #404040;
+  color: #e0e0e0;
 }
 
 .input-field:focus {
   outline: none;
   border-color: #32CD32;
   box-shadow: 0 0 0 3px rgba(50, 205, 50, 0.1);
+}
+
+.dark .input-field:focus {
+  box-shadow: 0 0 0 3px rgba(50, 205, 50, 0.2);
 }
 
 .input-field.error {
