@@ -617,7 +617,7 @@ function Calculator({ user, onSignOut }) {
         <div className="container mx-auto px-4 text-center">
           <p className="text-lime font-bold text-lg">Pre-Qualification App</p>
           <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">Your Mortgage Calculator</p>
-          <p className="text-gray-500 dark:text-gray-500 text-xs mt-2">© 2024 Pre-Qualification App. All rights reserved.</p>
+          <p className="text-gray-500 dark:text-gray-500 text-xs mt-2">© 2025 Pre-Qualification App. All rights reserved.</p>
         </div>
       </footer>
     </div>
