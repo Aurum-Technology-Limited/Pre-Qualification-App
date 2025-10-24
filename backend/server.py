@@ -479,7 +479,7 @@ async def generate_certificate(certificate_id: str, auth_data = Depends(get_curr
         return FileResponse(
             pdf_path,
             media_type="application/pdf",
-            filename=f"PreQualification_Certificate_{certificate_id}.pdf"
+            filename=f"Pre-Qualification_Certificate_{certificate_id}.pdf"
         )
         
     except Exception as e:
