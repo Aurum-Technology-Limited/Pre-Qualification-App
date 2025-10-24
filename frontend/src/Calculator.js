@@ -579,4 +579,4 @@ function Calculator({ user, onSignOut }) {
   );
 }
 
-export default App;
+export default Calculator;
