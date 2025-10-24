@@ -170,6 +170,10 @@
   transition: all 0.3s ease;
 }
 
+.dark .tab-button {
+  color: #999;
+}
+
 .tab-button.active {
   color: #32CD32;
   border-bottom-color: #32CD32;
