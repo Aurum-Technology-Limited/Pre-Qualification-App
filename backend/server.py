@@ -268,7 +268,7 @@ async def health_check():
     return {"status": "healthy", "service": "Pre-Qualification App API"}
 
 @app.post("/api/calculate")
-async def calculate(request: CalculationRequest):
+async def calculate(request: CalculationRequest, user = Depends(get_current_user)):
     try:
         cert_id = str(uuid.uuid4())[:8].upper()
         issue_date = datetime.now()
