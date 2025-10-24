@@ -258,7 +258,7 @@ async def get_current_user(authorization: Optional[str] = Header(None)):
         if not user_response or not user_response.user:
             raise HTTPException(status_code=401, detail="Invalid token")
         
-        return user_response.user
+        return {"user": user_response.user, "token": token}
     except Exception as e:
         raise HTTPException(status_code=401, detail=f"Authentication failed: {str(e)}")
 
