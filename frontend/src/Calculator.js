@@ -40,6 +40,14 @@ function Calculator({ user, onSignOut }) {
     setLoading(true);
     
     try {
+      // Get auth token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setError('Not authenticated. Please log in again.');
+        setLoading(false);
+        return;
+      }
+      
       const requestData = {
         calculation_type: calculationType,
         applicant: {
