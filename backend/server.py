@@ -1,5 +1,4 @@
-from fastapi import FastAPI, HTTPException, Header, Depends, Request
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel, Field, field_validator
 from typing import Optional, Literal
@@ -8,15 +7,10 @@ from starlette.middleware.base import BaseHTTPMiddleware
 import os
 import math
 import uuid
-from dotenv import load_dotenv
-from supabase import create_client, Client
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from reportlab.lib.colors import HexColor
 from pathlib import Path
-
-# Load environment variables
-load_dotenv()
 
 app = FastAPI(title="Pre-Qualification App API")
 
@@ -64,15 +58,6 @@ class CustomCORSMiddleware(BaseHTTPMiddleware):
 # Add custom CORS middleware
 app.add_middleware(CustomCORSMiddleware)
 
-# Supabase Connection
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY")
-
-if not SUPABASE_URL or not SUPABASE_KEY:
-    raise ValueError("SUPABASE_URL and SUPABASE_KEY must be set in environment")
-
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-
 # Ensure PDF directory exists
 PDF_DIR = Path("/app/backend/certificates")
 PDF_DIR.mkdir(exist_ok=True)
@@ -99,18 +84,18 @@ class AffordabilityInput(BaseModel):
         return v
 
 class PaymentInput(BaseModel):
-    principal_amount: float = Field(gt=0, le=50000000)
+    principal_amount: float = Field(gt=0, le=10000000)
     annual_interest_rate: float = Field(gt=0.001, le=0.50)
     term_years: int = Field(ge=1, le=50)
     stress_rate_bps: Optional[int] = Field(default=0, ge=0, le=1000)
 
 class CalculationRequest(BaseModel):
     calculation_type: Literal["AFFORDABILITY", "PAYMENT"]
+    applicant: ApplicantInfo
     affordability_input: Optional[AffordabilityInput] = None
     payment_input: Optional[PaymentInput] = None
-    applicant: ApplicantInfo
-    currency: str = "TTD"
-    validity_days: int = Field(default=90, ge=60, le=180)
+    currency: Literal["TTD", "USD"] = "TTD"
+    validity_days: int = Field(default=90, ge=1, le=365)
 
 # Calculation Functions
 def calculate_monthly_payment(principal: float, annual_rate: float, term_years: int) -> float:
@@ -278,40 +263,14 @@ def generate_certificate_pdf(certificate_data: dict) -> str:
     c.save()
     return str(filepath)
 
-# Authentication helper
-async def get_current_user(authorization: Optional[str] = Header(None)):
-    """Extract and verify user from JWT token"""
-    if not authorization:
-        raise HTTPException(status_code=401, detail="No authorization header")
-    
-    try:
-        # Extract token from "Bearer <token>"
-        token = authorization.replace("Bearer ", "")
-        
-        # Verify token with Supabase
-        user_response = supabase.auth.get_user(token)
-        
-        if not user_response or not user_response.user:
-            raise HTTPException(status_code=401, detail="Invalid token")
-        
-        return {"user": user_response.user, "token": token}
-    except Exception as e:
-        raise HTTPException(status_code=401, detail=f"Authentication failed: {str(e)}")
-
 # API Endpoints
 @app.get("/api/health")
 async def health_check():
     return {"status": "healthy", "service": "Pre-Qualification App API"}
 
 @app.post("/api/calculate")
-async def calculate(request: CalculationRequest, auth_data = Depends(get_current_user)):
+async def calculate(request: CalculationRequest):
     try:
-        user = auth_data["user"]
-        token = auth_data["token"]
-        
-        # Create authenticated Supabase client for this request
-        user_supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
-        user_supabase.postgrest.auth(token)
         cert_id = str(uuid.uuid4())[:8].upper()
         issue_date = datetime.now()
         expiry_date = issue_date + timedelta(days=request.validity_days)
@@ -438,39 +397,14 @@ async def calculate(request: CalculationRequest, auth_data = Depends(get_current
                     }
                 })
         
-        # Store in Supabase with user_id (using authenticated client)
-        certificate_doc = {
-            **result,
-            "user_id": user.id,
-            "created_at": datetime.now().isoformat(),
-            "pdf_generated": False
-        }
-        
-        user_supabase.table("certificates").insert(certificate_doc).execute()
-        
         return result
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/generate-certificate/{certificate_id}")
-async def generate_certificate(certificate_id: str, auth_data = Depends(get_current_user)):
+async def generate_certificate(certificate_id: str, cert_data: dict):
     try:
-        user = auth_data["user"]
-        token = auth_data["token"]
-        
-        # Create authenticated Supabase client
-        user_supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
-        user_supabase.postgrest.auth(token)
-        
-        # Retrieve certificate data from Supabase (user-specific)
-        response = user_supabase.table("certificates").select("*").eq("certificate_id", certificate_id).execute()
-        
-        if not response.data or len(response.data) == 0:
-            raise HTTPException(status_code=404, detail="Certificate not found")
-        
-        cert_data = response.data[0]
-        
         # Prepare certificate data for PDF
         pdf_data = {
             "certificate_id": cert_data["certificate_id"],
@@ -486,16 +420,17 @@ async def generate_certificate(certificate_id: str, auth_data = Depends(get_curr
         
         if cert_data["calculation_type"] == "AFFORDABILITY":
             pdf_data.update({
-                "gross_income": cert_data["affordable_payment_formatted"].replace(cert_data["affordable_payment_formatted"].split()[0], cert_data["currency"]),
+                "gross_income": cert_data["affordable_payment_formatted"],
                 "dsr_ratio": round(cert_data["dsr_ratio"] * 100, 1),
-                "monthly_obligations": format_currency(cert_data["monthly_obligations"], cert_data["currency"]),
+                "monthly_obligations": cert_data.get("affordable_payment_formatted", "N/A"),
                 "affordable_payment": cert_data["affordable_payment_formatted"],
                 "max_loan": cert_data["max_loan_formatted"]
             })
             
             if "stress_test" in cert_data:
-                pdf_data["stress_bps"] = cert_data["stress_test"]["stress_rate_bps"]
-                pdf_data["stress_results"] = f"{cert_data['stress_test']['stress_max_loan_formatted']} (Reduction: {cert_data['stress_test']['reduction_percent']}%)"
+                st = cert_data["stress_test"]
+                pdf_data["stress_results"] = f"At {st['stress_rate_percent']}%: Max Loan {st['stress_max_loan_formatted']} (Reduction: {st['reduction_percent']}%)"
+                pdf_data["stress_bps"] = st["stress_rate_bps"]
         else:
             pdf_data.update({
                 "principal_amount": cert_data["principal_formatted"],
@@ -503,14 +438,12 @@ async def generate_certificate(certificate_id: str, auth_data = Depends(get_curr
             })
             
             if "stress_test" in cert_data:
-                pdf_data["stress_bps"] = cert_data["stress_test"]["stress_rate_bps"]
-                pdf_data["stress_results"] = f"{cert_data['stress_test']['stress_payment_formatted']} (Increase: {cert_data['stress_test']['increase_percent']}%)"
+                st = cert_data["stress_test"]
+                pdf_data["stress_results"] = f"At {st['stress_rate_percent']}%: Monthly Payment {st['stress_payment_formatted']} (Increase: {st['increase_percent']}%)"
+                pdf_data["stress_bps"] = st["stress_rate_bps"]
         
         # Generate PDF
         pdf_path = generate_certificate_pdf(pdf_data)
-        
-        # Update Supabase
-        user_supabase.table("certificates").update({"pdf_generated": True, "pdf_path": pdf_path}).eq("certificate_id", certificate_id).execute()
         
         return FileResponse(
             pdf_path,
@@ -520,34 +453,3 @@ async def generate_certificate(certificate_id: str, auth_data = Depends(get_curr
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-@app.get("/api/certificates/{certificate_id}")
-async def get_certificate(certificate_id: str, auth_data = Depends(get_current_user)):
-    user = auth_data["user"]
-    token = auth_data["token"]
-    
-    user_supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
-    user_supabase.postgrest.auth(token)
-    
-    response = user_supabase.table("certificates").select("*").eq("certificate_id", certificate_id).execute()
-    
-    if not response.data or len(response.data) == 0:
-        raise HTTPException(status_code=404, detail="Certificate not found")
-    
-    return response.data[0]
-
-@app.get("/api/certificates")
-async def list_certificates(limit: int = 10, auth_data = Depends(get_current_user)):
-    user = auth_data["user"]
-    token = auth_data["token"]
-    
-    user_supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
-    user_supabase.postgrest.auth(token)
-    
-    response = user_supabase.table("certificates").select("*").order("created_at", desc=True).limit(limit).execute()
-    
-    return {"certificates": response.data, "count": len(response.data)}
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8001)
