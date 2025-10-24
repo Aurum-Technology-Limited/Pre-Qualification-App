@@ -424,9 +424,8 @@ async def generate_certificate(certificate_id: str, auth_data = Depends(get_curr
         token = auth_data["token"]
         
         # Create authenticated Supabase client
-        user_supabase = create_client(SUPABASE_URL, SUPABASE_KEY, options={
-            "headers": {"Authorization": f"Bearer {token}"}
-        })
+        user_supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+        user_supabase.postgrest.auth(token)
         
         # Retrieve certificate data from Supabase (user-specific)
         response = user_supabase.table("certificates").select("*").eq("certificate_id", certificate_id).execute()
