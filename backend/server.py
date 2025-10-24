@@ -1,9 +1,10 @@
-from fastapi import FastAPI, HTTPException, Header, Depends
+from fastapi import FastAPI, HTTPException, Header, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel, Field, field_validator
 from typing import Optional, Literal
 from datetime import datetime, timedelta
+from starlette.middleware.base import BaseHTTPMiddleware
 import os
 import math
 import uuid
@@ -19,20 +20,49 @@ load_dotenv()
 
 app = FastAPI(title="Pre-Qualification App API")
 
-# CORS Configuration
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "https://pre-qualification-ljxywcga9-marc-alleynes-projects.vercel.app",
-        "https://pre-qualification-app-yq1a-6mq1m82ra-marc-alleynes-projects.vercel.app",
-        "https://mortgage-preapp.preview.emergentagent.com",
-        "http://localhost:3000",
-        "http://localhost:3001",
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# Custom CORS Middleware to allow all Vercel domains
+class CustomCORSMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        origin = request.headers.get("origin")
+        
+        # Define allowed patterns
+        allowed_patterns = [
+            "vercel.app",
+            "emergentagent.com",
+            "localhost:3000",
+            "localhost:3001"
+        ]
+        
+        # Check if origin matches any allowed pattern
+        is_allowed = False
+        if origin:
+            for pattern in allowed_patterns:
+                if pattern in origin:
+                    is_allowed = True
+                    break
+        
+        # Handle preflight requests
+        if request.method == "OPTIONS":
+            response = JSONResponse(content={}, status_code=200)
+            if is_allowed and origin:
+                response.headers["Access-Control-Allow-Origin"] = origin
+                response.headers["Access-Control-Allow-Credentials"] = "true"
+                response.headers["Access-Control-Allow-Methods"] = "*"
+                response.headers["Access-Control-Allow-Headers"] = "*"
+            return response
+        
+        # Process the request
+        response = await call_next(request)
+        
+        # Add CORS headers to response
+        if is_allowed and origin:
+            response.headers["Access-Control-Allow-Origin"] = origin
+            response.headers["Access-Control-Allow-Credentials"] = "true"
+        
+        return response
+
+# Add custom CORS middleware
+app.add_middleware(CustomCORSMiddleware)
 
 # Supabase Connection
 SUPABASE_URL = os.getenv("SUPABASE_URL")
