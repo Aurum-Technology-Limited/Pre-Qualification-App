@@ -1,14 +1,11 @@
 import React, { useState } from 'react';
 import './App.css';
 import axios from 'axios';
-import { supabase } from './supabaseClient';
 import { useTheme } from './ThemeContext';
 
-// In development, proxy handles routing to backend (see package.json proxy setting)
-// In production, use environment variable or empty string for same-origin requests
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 
-function Calculator({ user, onSignOut }) {
+function Calculator() {
   const { darkMode, toggleDarkMode } = useTheme();
   const [calculationType, setCalculationType] = useState('AFFORDABILITY');
   const [loading, setLoading] = useState(false);
@@ -42,14 +39,6 @@ function Calculator({ user, onSignOut }) {
     setLoading(true);
     
     try {
-      // Get auth token
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        setError('Not authenticated. Please log in again.');
-        setLoading(false);
-        return;
-      }
-      
       const requestData = {
         calculation_type: calculationType,
         applicant: {
@@ -79,11 +68,7 @@ function Calculator({ user, onSignOut }) {
         };
       }
       
-      const response = await axios.post(`${BACKEND_URL}/api/calculate`, requestData, {
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`
-        }
-      });
+      const response = await axios.post(`${BACKEND_URL}/api/calculate`, requestData);
       setResults(response.data);
     } catch (err) {
       setError(err.response?.data?.message || err.response?.data?.detail || 'An error occurred during calculation');
@@ -98,22 +83,11 @@ function Calculator({ user, onSignOut }) {
     try {
       setLoading(true);
       
-      // Get auth token
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        setError('Not authenticated. Please log in again.');
-        setLoading(false);
-        return;
-      }
-      
       const response = await axios.post(
         `${BACKEND_URL}/api/generate-certificate/${results.certificate_id}`,
-        {},
-        { 
-          responseType: 'blob',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`
-          }
+        results,
+        {
+          responseType: 'blob'
         }
       );
       
@@ -130,488 +104,336 @@ function Calculator({ user, onSignOut }) {
       setLoading(false);
     }
   };
-  
-  const handleReset = () => {
-    setResults(null);
-    setError(null);
-    setApplicantName('');
-    setApplicantEmail('');
-    setApplicantPhone('');
-    setGrossIncome('');
-    setDsrRatio(0.4);
-    setMonthlyObligations('');
-    setPrincipalAmount('');
-    setInterestRate('');
-    setTermYears('20');
-    setStressRateBps('');
-  };
-  
-  const formatCurrency = (value) => {
-    if (!value) return '';
-    return new Intl.NumberFormat('en-US', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(value);
-  };
-  
+
   return (
-    <div className="App min-h-screen bg-gray-50 dark:bg-dark-bg transition-colors duration-200">
-      {/* Navigation Bar */}
-      <nav className="nav-bar py-4 px-6 shadow-lg dark:bg-gradient-to-r dark:from-lime-dark dark:to-lime">
-        <div className="container mx-auto flex items-center justify-between">
-          <div className="flex items-center">
-            <h1 className="text-3xl font-bold text-white" data-testid="app-title">Pre-Qualification App</h1>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="text-white text-sm">
-              <span data-testid="user-email">{user?.email}</span>
+    <div className={`min-h-screen ${darkMode ? 'dark bg-dark-bg' : 'bg-gray-50'} transition-colors duration-200`}>
+      {/* Header */}
+      <header className="bg-white dark:bg-dark-card shadow-sm transition-colors duration-200">
+        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-lime rounded-full flex items-center justify-center">
+              <span className="text-white text-xl font-bold">✓</span>
             </div>
-            <button
-              onClick={toggleDarkMode}
-              className="text-white hover:text-lime-light transition-colors p-2 rounded-lg hover:bg-white/10"
-              data-testid="dark-mode-toggle"
-              title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-            >
-              {darkMode ? (
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                </svg>
-              ) : (
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                </svg>
-              )}
-            </button>
-            <button
-              onClick={onSignOut}
-              className="bg-white text-lime hover:bg-lime-light hover:text-white border-2 border-white rounded-lg py-2 px-4 font-semibold transition-colors text-sm"
-              data-testid="logout-button"
-            >
-              Logout
-            </button>
+            <h1 className="text-2xl font-bold text-lime">Pre-Qualification App</h1>
           </div>
+          
+          <button
+            onClick={toggleDarkMode}
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-border transition-colors"
+            title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+          >
+            {darkMode ? '🌞' : '🌙'}
+          </button>
         </div>
-      </nav>
-      
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
-        {!results ? (
-          <div className="card p-8 fade-in bg-white dark:bg-dark-card transition-colors duration-200" data-testid="calculation-form">
-            <h2 className="text-2xl font-bold text-lime-dark dark:text-lime mb-6">New Pre-Qualification</h2>
-            
-            {/* Calculation Type Tabs */}
-            <div className="flex border-b border-gray-200 mb-8">
-              <button
-                className={`tab-button ${calculationType === 'AFFORDABILITY' ? 'active' : ''}`}
-                onClick={() => setCalculationType('AFFORDABILITY')}
-                data-testid="affordability-tab"
-              >
-                Affordability Assessment
-              </button>
-              <button
-                className={`tab-button ${calculationType === 'PAYMENT' ? 'active' : ''}`}
-                onClick={() => setCalculationType('PAYMENT')}
-                data-testid="payment-tab"
-              >
-                Payment Calculation
-              </button>
-            </div>
-            
-            {error && (
-              <div className="alert alert-error" data-testid="error-message">
-                <strong>Error:</strong> {error}
-              </div>
-            )}
-            
-            <form onSubmit={handleCalculate}>
-              {/* Applicant Information */}
-              <div className="mb-8">
-                <h3 className="text-xl font-semibold text-lime mb-4">Applicant Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-lime-dark dark:text-lime font-semibold mb-2">
-                      Full Name <span className="text-lime">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      className="input-field bg-white dark:bg-dark-bg dark:text-dark-text dark:border-dark-border"
-                      value={applicantName}
-                      onChange={(e) => setApplicantName(e.target.value)}
-                      required
-                      data-testid="applicant-name-input"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-lime-dark font-semibold mb-2">
-                      Email Address
-                    </label>
-                    <input
-                      type="email"
-                      className="input-field"
-                      value={applicantEmail}
-                      onChange={(e) => setApplicantEmail(e.target.value)}
-                      data-testid="applicant-email-input"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-lime-dark font-semibold mb-2">
-                      Phone Number
-                    </label>
-                    <input
-                      type="tel"
-                      className="input-field"
-                      value={applicantPhone}
-                      onChange={(e) => setApplicantPhone(e.target.value)}
-                      data-testid="applicant-phone-input"
-                    />
-                  </div>
-                </div>
-              </div>
-              
-              {/* Calculation-Specific Fields */}
-              {calculationType === 'AFFORDABILITY' ? (
-                <div className="mb-8">
-                  <h3 className="text-xl font-semibold text-lime mb-4">Financial Details</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-lime-dark font-semibold mb-2">
-                        Gross Monthly Income ({currency}) <span className="text-lime">*</span>
-                      </label>
-                      <input
-                        type="number"
-                        className="input-field"
-                        value={grossIncome}
-                        onChange={(e) => setGrossIncome(e.target.value)}
-                        min="0"
-                        step="0.01"
-                        required
-                        data-testid="gross-income-input"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-lime-dark font-semibold mb-2">
-                        Monthly Debt Obligations ({currency})
-                      </label>
-                      <input
-                        type="number"
-                        className="input-field"
-                        value={monthlyObligations}
-                        onChange={(e) => setMonthlyObligations(e.target.value)}
-                        min="0"
-                        step="0.01"
-                        data-testid="monthly-obligations-input"
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="mt-6">
-                    <label className="block text-lime-dark font-semibold mb-2">
-                      Debt Service Ratio (DSR): {(dsrRatio * 100).toFixed(0)}%
-                    </label>
-                    <div className="slider-container">
-                      <input
-                        type="range"
-                        min="0.1"
-                        max="0.8"
-                        step="0.05"
-                        value={dsrRatio}
-                        onChange={(e) => setDsrRatio(parseFloat(e.target.value))}
-                        data-testid="dsr-ratio-slider"
-                      />
-                      <div className="flex justify-between text-sm text-gray-600 mt-1">
-                        <span>10%</span>
-                        <span>40%</span>
-                        <span>80%</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="mb-8">
-                  <h3 className="text-xl font-semibold text-lime mb-4">Loan Details</h3>
-                  <div>
-                    <label className="block text-lime-dark font-semibold mb-2">
-                      Principal Loan Amount ({currency}) <span className="text-lime">*</span>
-                    </label>
-                    <input
-                      type="number"
-                      className="input-field"
-                      value={principalAmount}
-                      onChange={(e) => setPrincipalAmount(e.target.value)}
-                      min="0"
-                      step="0.01"
-                      required
-                      data-testid="principal-amount-input"
-                    />
-                  </div>
-                </div>
-              )}
-              
-              {/* Common Loan Parameters */}
-              <div className="mb-8">
-                <h3 className="text-xl font-semibold text-lime mb-4">Loan Terms</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div>
-                    <label className="block text-lime-dark font-semibold mb-2">
-                      Annual Interest Rate (%) <span className="text-lime">*</span>
-                    </label>
-                    <input
-                      type="number"
-                      className="input-field"
-                      value={interestRate}
-                      onChange={(e) => setInterestRate(e.target.value)}
-                      min="0.1"
-                      max="50"
-                      step="0.1"
-                      required
-                      data-testid="interest-rate-input"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-lime-dark font-semibold mb-2">
-                      Loan Term (Years) <span className="text-lime">*</span>
-                    </label>
-                    <select
-                      className="input-field"
-                      value={termYears}
-                      onChange={(e) => setTermYears(e.target.value)}
-                      required
-                      data-testid="term-years-select"
-                    >
-                      {[5, 10, 15, 20, 25, 30].map(year => (
-                        <option key={year} value={year}>{year} years</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-lime-dark font-semibold mb-2">
-                      Currency
-                    </label>
-                    <select
-                      className="input-field"
-                      value={currency}
-                      onChange={(e) => setCurrency(e.target.value)}
-                      data-testid="currency-select"
-                    >
-                      <option value="TTD">TTD - Trinidad & Tobago Dollar</option>
-                      <option value="USD">USD - US Dollar</option>
-                      <option value="CAD">CAD - Canadian Dollar</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Optional Parameters */}
-              <div className="mb-8">
-                <h3 className="text-xl font-semibold text-lime mb-4">Optional Parameters</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-lime-dark font-semibold mb-2">
-                      Stress Test Rate (basis points)
-                    </label>
-                    <input
-                      type="number"
-                      className="input-field"
-                      value={stressRateBps}
-                      onChange={(e) => setStressRateBps(e.target.value)}
-                      min="0"
-                      max="1000"
-                      placeholder="e.g., 200 for +2%"
-                      data-testid="stress-rate-input"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-lime-dark font-semibold mb-2">
-                      Certificate Validity (Days)
-                    </label>
-                    <select
-                      className="input-field"
-                      value={validityDays}
-                      onChange={(e) => setValidityDays(e.target.value)}
-                      data-testid="validity-days-select"
-                    >
-                      <option value="60">60 days</option>
-                      <option value="90">90 days</option>
-                      <option value="120">120 days</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Submit Button */}
-              <div className="flex justify-end gap-4">
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={handleReset}
-                  data-testid="reset-button"
-                >
-                  Reset Form
-                </button>
-                <button
-                  type="submit"
-                  className="btn-primary"
-                  disabled={loading}
-                  data-testid="calculate-button"
-                >
-                  {loading ? (
-                    <span className="flex items-center gap-2">
-                      <div className="loading-spinner" style={{width: '20px', height: '20px', borderWidth: '3px'}}></div>
-                      Calculating...
-                    </span>
-                  ) : (
-                    'Calculate'
-                  )}
-                </button>
-              </div>
-            </form>
+      </header>
+
+      <main className="container mx-auto px-4 py-8">
+        {/* Calculation Type Tabs */}
+        <div className="bg-white dark:bg-dark-card rounded-lg shadow-md p-6 mb-6 transition-colors duration-200">
+          <h2 className="text-2xl font-bold text-lime mb-4">New Pre-Qualification</h2>
+          
+          <div className="flex space-x-2 mb-6">
+            <button
+              onClick={() => setCalculationType('AFFORDABILITY')}
+              className={`flex-1 py-3 px-6 rounded-lg font-semibold transition-all ${
+                calculationType === 'AFFORDABILITY'
+                  ? 'bg-lime text-white shadow-md'
+                  : 'bg-gray-100 dark:bg-dark-border text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+              }`}
+            >
+              Affordability Assessment
+            </button>
+            <button
+              onClick={() => setCalculationType('PAYMENT')}
+              className={`flex-1 py-3 px-6 rounded-lg font-semibold transition-all ${
+                calculationType === 'PAYMENT'
+                  ? 'bg-lime text-white shadow-md'
+                  : 'bg-gray-100 dark:bg-dark-border text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+              }`}
+            >
+              Payment Calculation
+            </button>
           </div>
-        ) : (
-          <div className="fade-in" data-testid="results-section">
-            {/* Results Display */}
-            <div className="card p-8 mb-6">
-              <div className="flex justify-between items-start mb-6">
+
+          {error && (
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-3 rounded-lg mb-4">
+              <p className="font-semibold">Error: {error}</p>
+            </div>
+          )}
+
+          <form onSubmit={handleCalculate} className="space-y-6">
+            {/* Applicant Information */}
+            <div>
+              <h3 className="text-lg font-semibold text-lime dark:text-lime mb-3">Applicant Information</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <h2 className="text-2xl font-bold text-lime mb-2">Assessment Results</h2>
-                  <p className="text-gray-600">Certificate ID: <span className="font-mono font-semibold" data-testid="certificate-id">{results.certificate_id}</span></p>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Full Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={applicantName}
+                    onChange={(e) => setApplicantName(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-lime focus:border-transparent dark:bg-dark-border dark:text-white"
+                    placeholder="John Doe"
+                  />
                 </div>
-                <button
-                  onClick={handleReset}
-                  className="btn-secondary"
-                  data-testid="new-calculation-button"
-                >
-                  New Calculation
-                </button>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Email Address
+                  </label>
+                  <input
+                    type="email"
+                    value={applicantEmail}
+                    onChange={(e) => setApplicantEmail(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-lime focus:border-transparent dark:bg-dark-border dark:text-white"
+                    placeholder="john@example.com"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Phone Number
+                  </label>
+                  <input
+                    type="tel"
+                    value={applicantPhone}
+                    onChange={(e) => setApplicantPhone(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-lime focus:border-transparent dark:bg-dark-border dark:text-white"
+                    placeholder="+1 (555) 123-4567"
+                  />
+                </div>
               </div>
+            </div>
+
+            {/* Financial Details */}
+            <div>
+              <h3 className="text-lg font-semibold text-lime dark:text-lime mb-3">Financial Details</h3>
               
               {calculationType === 'AFFORDABILITY' ? (
-                <div>
-                  <div className="results-card p-6 rounded-lg mb-6">
-                    <h3 className="text-lg font-semibold text-lime-dark mb-4">Affordability Summary</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <p className="text-gray-600 mb-1">Affordable Monthly Payment</p>
-                        <p className="text-2xl font-bold text-lime-dark" data-testid="affordable-payment">{results.affordable_payment_formatted}</p>
-                      </div>
-                      <div>
-                        <p className="text-gray-600 mb-1">Maximum Loan Amount</p>
-                        <p className="amount-highlight" data-testid="max-loan-amount">{results.max_loan_formatted}</p>
-                      </div>
-                    </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Gross Monthly Income <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      required
+                      step="0.01"
+                      value={grossIncome}
+                      onChange={(e) => setGrossIncome(e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-lime focus:border-transparent dark:bg-dark-border dark:text-white"
+                      placeholder="5000.00"
+                    />
                   </div>
-                  
-                  {results.stress_test && (
-                    <div className="alert alert-warning mb-6" data-testid="stress-test-results">
-                      <h4 className="font-bold mb-2">Stress Test Results (+ {results.stress_test.stress_rate_bps} bps)</h4>
-                      <p>At stressed rate of {results.stress_test.stress_rate_percent}%, maximum loan reduces to:</p>
-                      <p className="text-xl font-bold mt-2">{results.stress_test.stress_max_loan_formatted}</p>
-                      <p className="text-sm mt-1">Reduction: {results.stress_test.reduction_percent}% ({results.currency} ${formatCurrency(results.stress_test.reduction_amount)})</p>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      DSR Ratio <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      required
+                      value={dsrRatio}
+                      onChange={(e) => setDsrRatio(parseFloat(e.target.value))}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-lime focus:border-transparent dark:bg-dark-border dark:text-white"
+                    >
+                      <option value="0.3">30%</option>
+                      <option value="0.35">35%</option>
+                      <option value="0.4">40%</option>
+                      <option value="0.45">45%</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Existing Monthly Obligations
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={monthlyObligations}
+                      onChange={(e) => setMonthlyObligations(e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-lime focus:border-transparent dark:bg-dark-border dark:text-white"
+                      placeholder="500.00"
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Principal Loan Amount <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    step="0.01"
+                    value={principalAmount}
+                    onChange={(e) => setPrincipalAmount(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-lime focus:border-transparent dark:bg-dark-border dark:text-white"
+                    placeholder="250000.00"
+                  />
+                </div>
+              )}
+
+              {/* Common Fields */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Interest Rate (%) <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    step="0.01"
+                    value={interestRate}
+                    onChange={(e) => setInterestRate(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-lime focus:border-transparent dark:bg-dark-border dark:text-white"
+                    placeholder="4.5"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Loan Term (Years) <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    value={termYears}
+                    onChange={(e) => setTermYears(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-lime focus:border-transparent dark:bg-dark-border dark:text-white"
+                    placeholder="20"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Stress Test (bps)
+                  </label>
+                  <input
+                    type="number"
+                    value={stressRateBps}
+                    onChange={(e) => setStressRateBps(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-lime focus:border-transparent dark:bg-dark-border dark:text-white"
+                    placeholder="200"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Currency
+                  </label>
+                  <select
+                    value={currency}
+                    onChange={(e) => setCurrency(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-lime focus:border-transparent dark:bg-dark-border dark:text-white"
+                  >
+                    <option value="TTD">TTD</option>
+                    <option value="USD">USD</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Certificate Validity (Days)
+                  </label>
+                  <input
+                    type="number"
+                    value={validityDays}
+                    onChange={(e) => setValidityDays(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-lime focus:border-transparent dark:bg-dark-border dark:text-white"
+                    placeholder="90"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-lime text-white py-3 px-6 rounded-lg font-semibold hover:bg-lime-dark transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
+            >
+              {loading ? 'Calculating...' : 'Calculate Pre-Qualification'}
+            </button>
+          </form>
+        </div>
+
+        {/* Results */}
+        {results && (
+          <div className="bg-white dark:bg-dark-card rounded-lg shadow-md p-6 transition-colors duration-200">
+            <h3 className="text-2xl font-bold text-lime mb-4">Pre-Qualification Results</h3>
+            
+            <div className="bg-green-50 dark:bg-green-900/20 border-2 border-lime rounded-lg p-6 mb-4">
+              <div className="flex justify-between items-center mb-4">
+                <span className="text-sm text-gray-600 dark:text-gray-400">Certificate ID: {results.certificate_id}</span>
+                <span className="text-sm text-gray-600 dark:text-gray-400">Valid until: {results.expiry_date}</span>
+              </div>
+              
+              {results.calculation_type === 'AFFORDABILITY' ? (
+                <div>
+                  <div className="text-center mb-4">
+                    <p className="text-gray-600 dark:text-gray-400 mb-1">Maximum Loan Amount</p>
+                    <p className="text-4xl font-bold text-lime">{results.max_loan_formatted}</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p className="text-gray-600 dark:text-gray-400">Monthly Payment</p>
+                      <p className="font-semibold dark:text-white">{results.affordable_payment_formatted}</p>
                     </div>
-                  )}
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <p className="text-sm text-gray-600 mb-1">Gross Monthly Income</p>
-                      <p className="text-lg font-semibold text-lime-dark">{currency} ${formatCurrency(results.gross_monthly_income)}</p>
-                    </div>
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <p className="text-sm text-gray-600 mb-1">DSR Ratio</p>
-                      <p className="text-lg font-semibold text-lime-dark">{(results.dsr_ratio * 100).toFixed(0)}%</p>
-                    </div>
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <p className="text-sm text-gray-600 mb-1">Monthly Obligations</p>
-                      <p className="text-lg font-semibold text-lime-dark">{currency} ${formatCurrency(results.monthly_obligations)}</p>
+                    <div>
+                      <p className="text-gray-600 dark:text-gray-400">Interest Rate</p>
+                      <p className="font-semibold dark:text-white">{results.interest_rate_percent}%</p>
                     </div>
                   </div>
                 </div>
               ) : (
                 <div>
-                  <div className="results-card p-6 rounded-lg mb-6">
-                    <h3 className="text-lg font-semibold text-lime-dark mb-4">Payment Summary</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <p className="text-gray-600 mb-1">Principal Loan Amount</p>
-                        <p className="text-2xl font-bold text-lime-dark" data-testid="principal-display">{results.principal_formatted}</p>
-                      </div>
-                      <div>
-                        <p className="text-gray-600 mb-1">Monthly Payment</p>
-                        <p className="amount-highlight" data-testid="monthly-payment-display">{results.monthly_payment_formatted}</p>
-                      </div>
-                    </div>
+                  <div className="text-center mb-4">
+                    <p className="text-gray-600 dark:text-gray-400 mb-1">Monthly Payment</p>
+                    <p className="text-4xl font-bold text-lime">{results.monthly_payment_formatted}</p>
                   </div>
-                  
-                  {results.stress_test && (
-                    <div className="alert alert-warning mb-6" data-testid="stress-test-payment-results">
-                      <h4 className="font-bold mb-2">Stress Test Results (+ {results.stress_test.stress_rate_bps} bps)</h4>
-                      <p>At stressed rate of {results.stress_test.stress_rate_percent}%, monthly payment increases to:</p>
-                      <p className="text-xl font-bold mt-2">{results.stress_test.stress_payment_formatted}</p>
-                      <p className="text-sm mt-1">Increase: {results.stress_test.increase_percent}% ({results.currency} ${formatCurrency(results.stress_test.increase_amount)})</p>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p className="text-gray-600 dark:text-gray-400">Total Interest</p>
+                      <p className="font-semibold dark:text-white">{results.total_interest_formatted}</p>
                     </div>
-                  )}
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <p className="text-sm text-gray-600 mb-1">Total Amount Paid</p>
-                      <p className="text-lg font-semibold text-lime-dark">{results.total_payments_formatted}</p>
-                    </div>
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <p className="text-sm text-gray-600 mb-1">Total Interest Paid</p>
-                      <p className="text-lg font-semibold text-lime-dark">{results.total_interest_formatted}</p>
+                    <div>
+                      <p className="text-gray-600 dark:text-gray-400">Total Payments</p>
+                      <p className="font-semibold dark:text-white">{results.total_payments_formatted}</p>
                     </div>
                   </div>
                 </div>
               )}
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <p className="text-sm text-gray-600 mb-1">Interest Rate</p>
-                  <p className="text-lg font-semibold text-lime-dark">{results.interest_rate_percent}% per annum</p>
-                </div>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <p className="text-sm text-gray-600 mb-1">Loan Term</p>
-                  <p className="text-lg font-semibold text-lime-dark">{results.term_years} years</p>
-                </div>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <p className="text-sm text-gray-600 mb-1">Valid Until</p>
-                  <p className="text-lg font-semibold text-lime-dark">{results.expiry_date}</p>
-                </div>
-              </div>
-            </div>
-            
-            {/* Certificate Generation */}
-            <div className="card p-8">
-              <h3 className="text-xl font-semibold text-lime mb-4">Generate Certificate</h3>
-              <p className="text-gray-600 mb-6">
-                Download a professional pre-qualification certificate for {results.applicant.name}.
-              </p>
-              
-              <div className="alert alert-success mb-6">
-                <p><strong>✓ Calculation Complete</strong></p>
-                <p>Your pre-qualification assessment has been completed and saved.</p>
-                <p className="text-sm mt-2">Issue Date: {results.issue_date} | Expiry Date: {results.expiry_date}</p>
-              </div>
-              
-              <div className="flex justify-center">
-                <button
-                  onClick={handleDownloadCertificate}
-                  className="btn-primary"
-                  disabled={loading}
-                  data-testid="download-certificate-button"
-                >
-                  {loading ? (
-                    <span className="flex items-center gap-2">
-                      <div className="loading-spinner" style={{width: '20px', height: '20px', borderWidth: '3px'}}></div>
-                      Generating PDF...
-                    </span>
+
+              {results.stress_test && (
+                <div className="mt-4 pt-4 border-t border-lime/30">
+                  <p className="text-sm font-semibold text-orange-600 dark:text-orange-400 mb-2">
+                    Stress Test (+{results.stress_test.stress_rate_bps} bps to {results.stress_test.stress_rate_percent}%)
+                  </p>
+                  {results.calculation_type === 'AFFORDABILITY' ? (
+                    <p className="text-sm dark:text-gray-300">
+                      Max Loan: {results.stress_test.stress_max_loan_formatted} 
+                      <span className="text-red-600 dark:text-red-400"> ({results.stress_test.reduction_percent}% reduction)</span>
+                    </p>
                   ) : (
-                    '📄 Download Certificate (PDF)'
+                    <p className="text-sm dark:text-gray-300">
+                      Monthly Payment: {results.stress_test.stress_payment_formatted}
+                      <span className="text-red-600 dark:text-red-400"> (+{results.stress_test.increase_percent}% increase)</span>
+                    </p>
                   )}
-                </button>
-              </div>
+                </div>
+              )}
             </div>
+
+            <button
+              onClick={handleDownloadCertificate}
+              disabled={loading}
+              className="w-full bg-lime text-white py-3 px-6 rounded-lg font-semibold hover:bg-lime-dark transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
+            >
+              {loading ? 'Generating...' : 'Download Certificate (PDF)'}
+            </button>
           </div>
         )}
-      </div>
-      
+      </main>
+
       {/* Footer */}
       <footer className="bg-white dark:bg-dark-card border-t border-gray-200 dark:border-dark-border py-6 mt-12 transition-colors duration-200">
         <div className="container mx-auto px-4 text-center">
