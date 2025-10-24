@@ -274,9 +274,8 @@ async def calculate(request: CalculationRequest, auth_data = Depends(get_current
         token = auth_data["token"]
         
         # Create authenticated Supabase client for this request
-        user_supabase = create_client(SUPABASE_URL, SUPABASE_KEY, options={
-            "headers": {"Authorization": f"Bearer {token}"}
-        })
+        user_supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+        user_supabase.postgrest.auth(token)
         cert_id = str(uuid.uuid4())[:8].upper()
         issue_date = datetime.now()
         expiry_date = issue_date + timedelta(days=request.validity_days)
