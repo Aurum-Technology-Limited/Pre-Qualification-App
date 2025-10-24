@@ -155,7 +155,7 @@ function Calculator({ user, onSignOut }) {
   };
   
   return (
-    <div className="App">
+    <div className="App min-h-screen bg-gray-50 dark:bg-dark-bg transition-colors duration-200">
       {/* Navigation Bar */}
       <nav className="nav-bar py-4 px-6 shadow-lg dark:bg-gradient-to-r dark:from-lime-dark dark:to-lime">
         <div className="container mx-auto flex items-center justify-between">
