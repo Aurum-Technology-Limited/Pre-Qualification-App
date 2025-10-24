@@ -95,10 +95,24 @@ function Calculator({ user, onSignOut }) {
     
     try {
       setLoading(true);
+      
+      // Get auth token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setError('Not authenticated. Please log in again.');
+        setLoading(false);
+        return;
+      }
+      
       const response = await axios.post(
         `${BACKEND_URL}/api/generate-certificate/${results.certificate_id}`,
         {},
-        { responseType: 'blob' }
+        { 
+          responseType: 'blob',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`
+          }
+        }
       );
       
       const url = window.URL.createObjectURL(new Blob([response.data]));
