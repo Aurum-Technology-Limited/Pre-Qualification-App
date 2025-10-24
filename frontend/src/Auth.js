@@ -67,10 +67,10 @@ function Auth() {
             </svg>
           </div>
         </div>
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-lime-dark">
+        <h2 className="mt-6 text-center text-3xl font-extrabold text-lime-dark dark:text-lime">
           Pre-Qualification App
         </h2>
-        <p className="mt-2 text-center text-sm text-gray-600">
+        <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
           {isLogin ? 'Sign in to your account' : 'Create a new account'}
         </p>
       </div>
