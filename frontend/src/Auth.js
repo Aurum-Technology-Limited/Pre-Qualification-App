@@ -77,7 +77,7 @@ function Auth() {
 
       {/* Form */}
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow-lg sm:rounded-lg sm:px-10">
+        <div className="bg-white dark:bg-dark-card py-8 px-4 shadow-lg sm:rounded-lg sm:px-10 transition-colors duration-200">
           {error && (
             <div className="alert alert-error mb-4" data-testid="auth-error">
               <strong>Error:</strong> {error}
