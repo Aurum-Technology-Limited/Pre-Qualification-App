@@ -120,7 +120,7 @@ function Calculator({ user, onSignOut }) {
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `Fraser_Finance_Certificate_${results.certificate_id}.pdf`);
+      link.setAttribute('download', `Pre-Qualification_Certificate_${results.certificate_id}.pdf`);
       document.body.appendChild(link);
       link.click();
       link.remove();
