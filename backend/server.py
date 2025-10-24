@@ -505,9 +505,8 @@ async def list_certificates(limit: int = 10, auth_data = Depends(get_current_use
     user = auth_data["user"]
     token = auth_data["token"]
     
-    user_supabase = create_client(SUPABASE_URL, SUPABASE_KEY, options={
-        "headers": {"Authorization": f"Bearer {token}"}
-    })
+    user_supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+    user_supabase.postgrest.auth(token)
     
     response = user_supabase.table("certificates").select("*").order("created_at", desc=True).limit(limit).execute()
     
